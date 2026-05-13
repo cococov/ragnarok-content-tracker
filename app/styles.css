@@ -674,10 +674,48 @@ a:focus-visible {
   gap: 12px;
 }
 
+.search-input-wrap {
+  position: relative;
+}
+
 .modal-search .search-input {
   height: 42px;
-  padding: 0 12px;
+  padding: 0 40px 0 12px;
   border-radius: 10px;
+}
+
+.search-clear-btn {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 22px;
+  height: 22px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: auto;
+  padding: 0;
+  border: 0 !important;
+  border-radius: 0;
+  background: transparent !important;
+  appearance: none;
+  color: var(--muted);
+  line-height: 1;
+  box-shadow: none !important;
+}
+
+.search-clear-btn svg {
+  width: 16px;
+  height: 16px;
+}
+
+.search-clear-btn:hover,
+.search-clear-btn:focus-visible,
+.search-clear-btn:active {
+  color: var(--text);
+  background: transparent !important;
+  box-shadow: none !important;
 }
 
 .modal-search .search-input:focus-visible {

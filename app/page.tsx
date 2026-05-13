@@ -326,7 +326,33 @@ export default function HomePage() {
               <button className="modal-x" aria-label="Cerrar modal" onClick={() => setShowSearchModal(false)}>×</button>
             </h3>
             <div className="search-modal-body">
-              <input className="search-input" placeholder="Escribe el nombre de la instancia..." value={search} onChange={(e) => setSearch(e.target.value)} />
+              <div className="search-input-wrap">
+                <input
+                  className="search-input"
+                  placeholder="Escribe el nombre de la instancia..."
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                />
+                {search ? (
+                  <button
+                    className="search-clear-btn"
+                    aria-label="Limpiar búsqueda"
+                    title="Limpiar búsqueda"
+                    onClick={() => setSearch("")}
+                  >
+                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                      <path
+                        d="M16.5 3.5 20.5 7.5M14 6 4.9 15.1a2 2 0 0 0 0 2.8l1.2 1.2a2 2 0 0 0 2.8 0L18 10M8.2 18.8h10.8"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2.2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                    </svg>
+                  </button>
+                ) : null}
+              </div>
               <div className="search-results">
                 {filteredSearch.length === 0 ? (
                   <div className="search-empty">No se encontraron instancias con ese nombre.</div>
