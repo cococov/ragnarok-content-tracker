@@ -70,11 +70,14 @@ button {
   font-weight: 700;
   min-height: 38px;
   padding: 0.6rem 0.85rem;
-  box-shadow: 0 6px 14px rgb(124 92 255 / 0.14);
-  transition: border-color 160ms ease, box-shadow 160ms ease, filter 160ms ease;
+  box-shadow: 0 2px 8px rgb(124 92 255 / 0.1);
+  transition: border-color 160ms ease, box-shadow 160ms ease, background-color 160ms ease;
 }
 
-button:hover:not(:disabled) { filter: brightness(1.06); box-shadow: 0 8px 18px rgb(124 92 255 / 0.2); }
+button:hover:not(:disabled) {
+  border-color: color-mix(in srgb, var(--accent) 86%, transparent);
+  box-shadow: 0 4px 12px rgb(124 92 255 / 0.14);
+}
 
 button:focus-visible,
 input:focus-visible,
@@ -429,6 +432,7 @@ a:focus-visible {
 .btn-reset-inline:hover {
   border-color: color-mix(in srgb, var(--danger) 65%, var(--line));
   background: color-mix(in srgb, var(--danger) 16%, var(--panel));
+  transform: none;
 }
 
 .main-grid {
@@ -488,6 +492,7 @@ a:focus-visible {
   padding: 12px 16px;
   border-bottom: 1px solid color-mix(in srgb, var(--line) 50%, transparent);
   transition: background 160ms ease;
+  cursor: pointer;
 }
 
 .row:hover,
@@ -517,6 +522,13 @@ a:focus-visible {
 
 .row-info,
 .custom-body { flex: 1; min-width: 0; }
+
+.row-info,
+.row-name,
+.custom-body,
+.custom-name-input-react {
+  cursor: pointer;
+}
 
 .row-name { font-size: 1rem; font-weight: 600; }
 
@@ -782,7 +794,8 @@ a:focus-visible {
 .modal-search .search-result-item .btn-add-search:hover {
   background: linear-gradient(180deg, var(--accent), var(--accent-soft));
   border-color: color-mix(in srgb, var(--accent) 92%, transparent);
-  filter: brightness(1.06);
+  box-shadow: 0 3px 10px rgb(124 92 255 / 0.12);
+  transform: none;
 }
 
 .modal-search .search-result-item .btn-add-search:focus-visible {
