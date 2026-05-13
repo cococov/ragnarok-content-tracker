@@ -40,6 +40,7 @@ export const DB_INSTANCES: Instance[] = [
   { id: "altar_selo", name: "Sealed Shrine", minLevel: 130, cooldownCategory: "12h", wiki: "https://browiki.org/wiki/Altar_do_Selo" },
   { id: "caverna_polvo", name: "Octopus Cave", minLevel: 100, cooldownCategory: "3h", wiki: "https://browiki.org/wiki/Caverna_do_Polvo", coins: 5 },
   { id: "sarah_fenrir", name: "Sarah vs Fenrir", minLevel: 99, cooldownCategory: "7_days", wiki: "https://browiki.org/wiki/Sarah_vs_Fenrir", coins: 20 },
+  { id: "endless_tower", name: "Endless Tower", minLevel: 50, cooldownCategory: "7_days", wiki: "https://irowiki.org/wiki/Endless_Tower" },
   { id: "fortaleza_voadora", name: "Sky Fortress", minLevel: 160, cooldownCategory: "3_days", wiki: "https://browiki.org/wiki/Fortaleza_Voadora", coins: 7 },
   { id: "glastheim_infernal", name: "OGH Challenge", minLevel: 170, cooldownCategory: "3_days", wiki: "https://browiki.org/wiki/Glastheim_Infernal" },
 ];
