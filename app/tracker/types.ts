@@ -41,13 +41,13 @@ export type CharState = {
   instances: Record<string, number>;
   notes: Record<string, string>;
   custom: CustomItem[];
+  addedInstances: TrackerItem[];
+  removedInstanceIds: string[];
   collapsed: Record<string, boolean>;
   order: Record<string, string[]>;
 };
 
 export type AppState = {
   activeChar: string;
-  globalAdded: TrackerItem[];
-  globalRemoved: string[];
   chars: CharState[];
 };

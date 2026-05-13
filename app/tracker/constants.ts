@@ -80,8 +80,6 @@ export const BASE_CATEGORIES: Category[] = [
 export function getDefaultState(): AppState {
   return {
     activeChar: "c1",
-    globalAdded: [],
-    globalRemoved: [],
     chars: [
       {
         id: "c1",
@@ -89,6 +87,8 @@ export function getDefaultState(): AppState {
         instances: {},
         notes: {},
         custom: [],
+        addedInstances: [],
+        removedInstanceIds: [],
         collapsed: {},
         order: {},
       },

@@ -1,8 +1,15 @@
 "use client";
 
+import { useState } from "react";
 import { useTracker } from "./tracker/useTracker";
+import type { Instance } from "./tracker/types";
 import { fmt, remaining } from "./tracker/utils";
 import { AuthNav } from "./auth-nav";
+
+type InstanceActionModalState =
+  | { kind: "add"; item: Instance }
+  | { kind: "remove"; itemId: string; itemName: string }
+  | null;
 
 export default function HomePage() {
   const {
@@ -38,6 +45,17 @@ export default function HomePage() {
     removeGlobal,
     resetCharacter,
   } = useTracker();
+  const [instanceActionModal, setInstanceActionModal] = useState<InstanceActionModalState>(null);
+
+  function applyInstanceAction(scope: "active" | "all") {
+    if (!instanceActionModal) return;
+    if (instanceActionModal.kind === "add") {
+      addNewGlobalInstance(instanceActionModal.item, scope);
+    } else {
+      removeGlobal(instanceActionModal.itemId, scope);
+    }
+    setInstanceActionModal(null);
+  }
 
   return (
     <>
@@ -187,7 +205,17 @@ export default function HomePage() {
                         </div>
                         <div className="row-actions">
                           <span className={`pill ${doneItem ? "active" : "idle"}`}>{doneItem ? fmt(r) : `CD: ${item.cdLabel}`}</span>
-                          <button className="icon-btn" onClick={(e) => { e.stopPropagation(); removeGlobal(item.id); }}>
+                          <button
+                            className="icon-btn"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setInstanceActionModal({
+                                kind: "remove",
+                                itemId: item.id,
+                                itemName: item.name,
+                              });
+                            }}
+                          >
                             Eliminar
                           </button>
                         </div>
@@ -303,12 +331,51 @@ export default function HomePage() {
                         {already ? (
                           <span className="search-added-text">Ya agregada</span>
                         ) : (
-                          <button className="btn-add-search" onClick={() => addNewGlobalInstance(item)}>Agregar</button>
+                          <button
+                            className="btn-add-search"
+                            onClick={() => setInstanceActionModal({ kind: "add", item })}
+                          >
+                            Agregar
+                          </button>
                         )}
                       </div>
                     );
                   })
                 )}
+              </div>
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+      {instanceActionModal ? (
+        <div className="modal-overlay open" onClick={() => setInstanceActionModal(null)}>
+          <div className="modal modal-scope" onClick={(e) => e.stopPropagation()}>
+            <h3 className="modal-header">
+              <span className="modal-title">
+                {instanceActionModal.kind === "add" ? "Agregar instancia" : "Eliminar instancia"}
+              </span>
+              <button
+                className="modal-x"
+                aria-label="Cerrar modal"
+                onClick={() => setInstanceActionModal(null)}
+              >
+                ×
+              </button>
+            </h3>
+            <div className="scope-modal-body">
+              <p className="scope-modal-text">
+                {instanceActionModal.kind === "add"
+                  ? `¿Cómo quieres agregar "${instanceActionModal.item.name}"?`
+                  : `¿Cómo quieres eliminar "${instanceActionModal.itemName}"?`}
+              </p>
+              <div className="scope-modal-actions">
+                <button className="btn-scope-all" onClick={() => applyInstanceAction("all")}>
+                  Aplicar para todos los personajes
+                </button>
+                <button className="btn-confirm" onClick={() => applyInstanceAction("active")}>
+                  Aplicar para el personaje actual
+                </button>
               </div>
             </div>
           </div>

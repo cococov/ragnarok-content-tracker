@@ -3,6 +3,8 @@ import { BASE_CATEGORIES, DB_INSTANCES, getDefaultState, STORAGE_KEY } from "./c
 import type { AppState, CharState, Instance, TrackerItem } from "./types";
 import { getNextResetLabel, mapCooldown, remaining } from "./utils";
 
+type ApplyScope = "active" | "all";
+
 export function useTracker() {
   const [state, setState] = useState<AppState>(getDefaultState());
   const [mounted, setMounted] = useState(false);
@@ -35,7 +37,7 @@ export function useTracker() {
           const loaded = remoteData.state
             ? { ...getDefaultState(), ...remoteData.state }
             : getDefaultState();
-          setState(syncGlobalInstanceNames(loaded));
+          setState(normalizeState(syncGlobalInstanceNames(loaded)));
           setMounted(true);
           return;
         }
@@ -49,7 +51,7 @@ export function useTracker() {
         const raw = localStorage.getItem(STORAGE_KEY);
         if (raw) {
           const loaded = { ...getDefaultState(), ...(JSON.parse(raw) as AppState) };
-          setState(syncGlobalInstanceNames(loaded));
+          setState(normalizeState(syncGlobalInstanceNames(loaded)));
         }
       } catch {
         // ignore local parse errors
@@ -93,9 +95,11 @@ export function useTracker() {
   const categories = useMemo(() => {
     const result = structuredClone(BASE_CATEGORIES);
     const byId = new Map(DB_INSTANCES.map((instance) => [instance.id, instance]));
+    const addedInstances = activeChar.addedInstances ?? [];
+    const removedInstanceIds = activeChar.removedInstanceIds ?? [];
 
-    state.globalAdded.forEach((item) => {
-      if (state.globalRemoved.includes(item.id)) return;
+    addedInstances.forEach((item) => {
+      if (removedInstanceIds.includes(item.id)) return;
       const canonical = byId.get(item.id);
       const mergedItem: TrackerItem = canonical
         ? {
@@ -119,11 +123,11 @@ export function useTracker() {
     });
 
     result.forEach((cat) => {
-      cat.items = cat.items.filter((i) => !state.globalRemoved.includes(i.id));
+      cat.items = cat.items.filter((i) => !removedInstanceIds.includes(i.id));
     });
 
     return result;
-  }, [state.globalAdded, state.globalRemoved]);
+  }, [activeChar.addedInstances, activeChar.removedInstanceIds, activeChar.id]);
 
   const totalMain = categories.reduce((sum, c) => sum + c.items.length, 0);
   const doneMain = categories.reduce(
@@ -183,6 +187,8 @@ export function useTracker() {
           instances: {},
           notes: {},
           custom: [],
+          addedInstances: [],
+          removedInstanceIds: [],
           collapsed: {},
           order: {},
         },
@@ -205,11 +211,11 @@ export function useTracker() {
     });
   }
 
-  function addNewGlobalInstance(item: Instance) {
+  function addNewGlobalInstance(item: Instance, scope: ApplyScope = "active") {
     const already = categories.some((cat) =>
       cat.items.some((i) => i.id === item.id || i.wiki === item.wiki),
     );
-    if (already) return;
+    if (scope === "active" && already) return;
 
     const newItem: TrackerItem = {
       id: item.id,
@@ -219,12 +225,26 @@ export function useTracker() {
       coins: item.coins,
     };
 
-    setState((prev) => ({
-      ...prev,
-      globalRemoved: prev.globalRemoved.filter((x) => x !== newItem.id),
-      globalAdded: prev.globalAdded.some((x) => x.id === newItem.id)
-        ? prev.globalAdded
-        : [...prev.globalAdded, newItem],
+    if (scope === "all") {
+      setState((prev) => ({
+        ...prev,
+        chars: prev.chars.map((ch) => ({
+          ...ch,
+          removedInstanceIds: (ch.removedInstanceIds ?? []).filter((x) => x !== newItem.id),
+          addedInstances: (ch.addedInstances ?? []).some((x) => x.id === newItem.id)
+            ? (ch.addedInstances ?? [])
+            : [...(ch.addedInstances ?? []), newItem],
+        })),
+      }));
+      return;
+    }
+
+    updateActiveChar((ch) => ({
+      ...ch,
+      removedInstanceIds: (ch.removedInstanceIds ?? []).filter((x) => x !== newItem.id),
+      addedInstances: (ch.addedInstances ?? []).some((x) => x.id === newItem.id)
+        ? (ch.addedInstances ?? [])
+        : [...(ch.addedInstances ?? []), newItem],
     }));
   }
 
@@ -264,13 +284,25 @@ export function useTracker() {
     }));
   }
 
-  function removeGlobal(id: string) {
-    if (!confirm("¿Seguro que quieres remover esta instancia de tu lista?")) return;
-    setState((prev) => ({
-      ...prev,
-      globalRemoved: prev.globalRemoved.includes(id)
-        ? prev.globalRemoved
-        : [...prev.globalRemoved, id],
+  function removeGlobal(id: string, scope: ApplyScope = "active") {
+    if (scope === "all") {
+      setState((prev) => ({
+        ...prev,
+        chars: prev.chars.map((ch) => ({
+          ...ch,
+          removedInstanceIds: (ch.removedInstanceIds ?? []).includes(id)
+            ? (ch.removedInstanceIds ?? [])
+            : [...(ch.removedInstanceIds ?? []), id],
+        })),
+      }));
+      return;
+    }
+
+    updateActiveChar((ch) => ({
+      ...ch,
+      removedInstanceIds: (ch.removedInstanceIds ?? []).includes(id)
+        ? (ch.removedInstanceIds ?? [])
+        : [...(ch.removedInstanceIds ?? []), id],
     }));
   }
 
@@ -322,28 +354,70 @@ function syncGlobalInstanceNames(state: AppState): AppState {
   const byId = new Map(DB_INSTANCES.map((instance) => [instance.id, instance]));
   let changed = false;
 
-  const globalAdded = state.globalAdded.map((item) => {
-    const canonical = byId.get(item.id);
-    if (!canonical) return item;
+  const chars = state.chars.map((char) => {
+    const sourceAdded = getLegacyGlobalAdded(state, char);
+    const sourceRemoved = getLegacyGlobalRemoved(state, char);
+    let charChanged =
+      sourceAdded !== char.addedInstances || sourceRemoved !== char.removedInstanceIds;
 
-    const next: TrackerItem = {
-      ...item,
-      name: canonical.name,
-      wiki: canonical.wiki,
-      coins: canonical.coins ?? item.coins,
+    const addedInstances = sourceAdded.map((item) => {
+      const canonical = byId.get(item.id);
+      if (!canonical) return item;
+
+      const next: TrackerItem = {
+        ...item,
+        name: canonical.name,
+        wiki: canonical.wiki,
+        coins: canonical.coins ?? item.coins,
+      };
+
+      if (
+        next.name !== item.name ||
+        next.wiki !== item.wiki ||
+        next.coins !== item.coins
+      ) {
+        charChanged = true;
+      }
+
+      return next;
+    });
+
+    if (!charChanged) return char;
+    changed = true;
+
+    return {
+      ...char,
+      addedInstances,
+      removedInstanceIds: sourceRemoved,
     };
-
-    if (
-      next.name !== item.name ||
-      next.wiki !== item.wiki ||
-      next.coins !== item.coins
-    ) {
-      changed = true;
-    }
-
-    return next;
   });
 
   if (!changed) return state;
-  return { ...state, globalAdded };
+  return { ...state, chars };
+}
+
+function normalizeState(state: AppState): AppState {
+  let changed = false;
+  const chars = state.chars.map((char) => {
+    const addedInstances = char.addedInstances ?? [];
+    const removedInstanceIds = char.removedInstanceIds ?? [];
+    if (char.addedInstances || char.removedInstanceIds) return char;
+    changed = true;
+    return { ...char, addedInstances, removedInstanceIds };
+  });
+
+  if (!changed) return state;
+  return { ...state, chars };
+}
+
+function getLegacyGlobalAdded(state: AppState, char: CharState): TrackerItem[] {
+  if (char.addedInstances) return char.addedInstances;
+  const legacy = (state as AppState & { globalAdded?: TrackerItem[] }).globalAdded;
+  return legacy ?? [];
+}
+
+function getLegacyGlobalRemoved(state: AppState, char: CharState): string[] {
+  if (char.removedInstanceIds) return char.removedInstanceIds;
+  const legacy = (state as AppState & { globalRemoved?: string[] }).globalRemoved;
+  return legacy ?? [];
 }
