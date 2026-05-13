@@ -4,7 +4,7 @@ Checklist de instancias para Ragnarok Online construido con Next.js.
 
 ## Stack
 
-- Next.js 15 (App Router)
+- Next.js 16 (App Router)
 - React 19
 - PostgreSQL
 - OAuth con Discord
@@ -27,22 +27,29 @@ DISCORD_CLIENT_ID=your_discord_client_id
 DISCORD_CLIENT_SECRET=your_discord_client_secret
 ```
 
-## Levantar base de datos (Docker)
+## Inicio rápido (desarrollo)
+
+1. Instalar dependencias:
+
+```bash
+pnpm install
+```
+
+2. Levantar base de datos (Docker):
 
 ```bash
 docker compose up -d
 ```
 
-## Inicializar esquema
+3. Inicializar esquema:
 
 ```bash
 pnpm run init:app
 ```
 
-## Ejecutar en desarrollo
+4. Ejecutar app:
 
 ```bash
-pnpm install
 pnpm run dev
 ```
 
@@ -67,4 +74,3 @@ pnpm start
 - `pnpm run build`: build
 - `pnpm start`: ejecutar build
 - `pnpm run init:app`: crear/actualizar esquema SQL en la base
-
