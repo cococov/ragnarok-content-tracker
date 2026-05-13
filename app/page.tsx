@@ -57,6 +57,22 @@ export default function HomePage() {
     setInstanceActionModal(null);
   }
 
+  function requestAddInstance(item: Instance) {
+    if (state.chars.length <= 1) {
+      addNewGlobalInstance(item, "active");
+      return;
+    }
+    setInstanceActionModal({ kind: "add", item });
+  }
+
+  function requestRemoveInstance(itemId: string, itemName: string) {
+    if (state.chars.length <= 1) {
+      removeGlobal(itemId, "active");
+      return;
+    }
+    setInstanceActionModal({ kind: "remove", itemId, itemName });
+  }
+
   return (
     <>
       <header className="site-header">
@@ -209,11 +225,7 @@ export default function HomePage() {
                             className="icon-btn"
                             onClick={(e) => {
                               e.stopPropagation();
-                              setInstanceActionModal({
-                                kind: "remove",
-                                itemId: item.id,
-                                itemName: item.name,
-                              });
+                              requestRemoveInstance(item.id, item.name);
                             }}
                           >
                             Eliminar
@@ -333,7 +345,7 @@ export default function HomePage() {
                         ) : (
                           <button
                             className="btn-add-search"
-                            onClick={() => setInstanceActionModal({ kind: "add", item })}
+                            onClick={() => requestAddInstance(item)}
                           >
                             Agregar
                           </button>
