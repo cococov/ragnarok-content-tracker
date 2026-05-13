@@ -4,9 +4,8 @@ ENV NEXT_TELEMETRY_DISABLED=1
 RUN corepack enable
 
 FROM base AS deps
-COPY package.json pnpm-lock.yaml ./
-RUN pnpm config set only-built-dependencies sharp \
-  && pnpm install --frozen-lockfile
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+RUN pnpm install --frozen-lockfile
 
 FROM base AS builder
 COPY --from=deps /app/node_modules ./node_modules
