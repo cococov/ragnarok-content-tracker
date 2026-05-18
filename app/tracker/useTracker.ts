@@ -13,7 +13,8 @@ export function useTracker() {
   const [search, setSearch] = useState("");
   const [showAddForm, setShowAddForm] = useState(false);
   const [formName, setFormName] = useState("");
-  const [formCd, setFormCd] = useState("24");
+  const [formDays, setFormDays] = useState("1");
+  const [formHours, setFormHours] = useState("0");
   const [formNote, setFormNote] = useState("");
   const [now, setNow] = useState(Date.now());
 
@@ -249,8 +250,17 @@ export function useTracker() {
   }
 
   function addCustom() {
-    const cdHours = parseFloat(formCd) || 24;
+    const days = Math.max(0, Math.floor(parseInt(formDays, 10) || 0));
+    const hours = Math.max(0, Math.floor(parseInt(formHours, 10) || 0));
+    const cdHours = days * 24 + hours;
     if (!formName.trim()) return;
+    if (cdHours <= 0) return;
+    const cdLabel =
+      Number.isInteger(cdHours) && cdHours % 24 === 0
+        ? cdHours / 24 === 1
+          ? "1 día"
+          : `${cdHours / 24} días`
+        : `${cdHours}h`;
 
     updateActiveChar((ch) => ({
       ...ch,
@@ -260,7 +270,7 @@ export function useTracker() {
           id: `ci${Date.now()}`,
           name: formName.trim(),
           cd: Math.round(cdHours * 3600),
-          cdLabel: cdHours === 24 ? "1 día" : cdHours === 168 ? "7 días" : `${cdHours}h`,
+          cdLabel,
           note: formNote.trim(),
           doneAt: null,
         },
@@ -268,7 +278,8 @@ export function useTracker() {
     }));
 
     setFormName("");
-    setFormCd("24");
+    setFormDays("1");
+    setFormHours("0");
     setFormNote("");
     setShowAddForm(false);
   }
@@ -335,8 +346,10 @@ export function useTracker() {
     setShowAddForm,
     formName,
     setFormName,
-    formCd,
-    setFormCd,
+    formDays,
+    setFormDays,
+    formHours,
+    setFormHours,
     formNote,
     setFormNote,
     addChar,

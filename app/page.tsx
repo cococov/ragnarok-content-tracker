@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useTracker } from "./tracker/useTracker";
-import type { Instance } from "./tracker/types";
+import type { CustomItem, Instance } from "./tracker/types";
 import { fmt, remaining } from "./tracker/utils";
 import { AuthNav } from "./auth-nav";
 
@@ -10,6 +10,28 @@ type InstanceActionModalState =
   | { kind: "add"; item: Instance }
   | { kind: "remove"; itemId: string; itemName: string }
   | null;
+
+type EditCustomModalState = {
+  itemId: string;
+  name: string;
+  cdDays: string;
+  cdHours: string;
+  note: string;
+} | null;
+
+type CustomActionModalState =
+  | { kind: "add"; name: string; cdHours: number; note: string }
+  | { kind: "edit"; itemId: string; name: string; cdHours: number; note: string }
+  | { kind: "remove"; itemId: string; itemName: string }
+  | null;
+
+function toCustomCdLabel(hours: number): string {
+  if (Number.isInteger(hours) && hours % 24 === 0) {
+    const days = hours / 24;
+    return days === 1 ? "1 día" : `${days} días`;
+  }
+  return `${hours}h`;
+}
 
 export default function HomePage() {
   const {
@@ -32,20 +54,201 @@ export default function HomePage() {
     setShowAddForm,
     formName,
     setFormName,
-    formCd,
-    setFormCd,
+    formDays,
+    setFormDays,
+    formHours,
+    setFormHours,
     formNote,
     setFormNote,
     addChar,
     updateActiveChar,
     toggleInstance,
     addNewGlobalInstance,
-    addCustom,
     toggleCustom,
     removeGlobal,
     resetCharacter,
   } = useTracker();
   const [instanceActionModal, setInstanceActionModal] = useState<InstanceActionModalState>(null);
+  const [editCustomModal, setEditCustomModal] = useState<EditCustomModalState>(null);
+  const [customActionModal, setCustomActionModal] = useState<CustomActionModalState>(null);
+
+  function openEditCustomModal(item: CustomItem) {
+    const totalHours = Math.max(1, Math.round(item.cd / 3600));
+    const cdDays = Math.floor(totalHours / 24);
+    const cdHours = totalHours % 24;
+    setEditCustomModal({
+      itemId: item.id,
+      name: item.name,
+      cdDays: String(cdDays),
+      cdHours: String(cdHours),
+      note: item.note ?? "",
+    });
+  }
+
+  function applyCustomAction(scope: "active" | "all") {
+    if (!customActionModal) return;
+
+    if (customActionModal.kind === "add") {
+      const customId = `ci${Date.now()}`;
+      const newItem = {
+        id: customId,
+        name: customActionModal.name,
+        cd: Math.round(customActionModal.cdHours * 3600),
+        cdLabel: toCustomCdLabel(customActionModal.cdHours),
+        note: customActionModal.note,
+        doneAt: null,
+      };
+
+      if (scope === "all") {
+        setState((prev) => ({
+          ...prev,
+          chars: prev.chars.map((char) => ({ ...char, custom: [...char.custom, newItem] })),
+        }));
+      } else {
+        updateActiveChar((char) => ({ ...char, custom: [...char.custom, newItem] }));
+      }
+
+      setFormName("");
+      setFormDays("1");
+      setFormHours("0");
+      setFormNote("");
+      setShowAddForm(false);
+      setCustomActionModal(null);
+      return;
+    }
+
+    if (customActionModal.kind === "edit") {
+      const editMapper = (item: CustomItem) =>
+        item.id === customActionModal.itemId
+          ? {
+              ...item,
+              name: customActionModal.name,
+              cd: Math.round(customActionModal.cdHours * 3600),
+              cdLabel: toCustomCdLabel(customActionModal.cdHours),
+              note: customActionModal.note,
+            }
+          : item;
+
+      if (scope === "all") {
+        setState((prev) => ({
+          ...prev,
+          chars: prev.chars.map((char) => ({ ...char, custom: char.custom.map(editMapper) })),
+        }));
+      } else {
+        updateActiveChar((char) => ({ ...char, custom: char.custom.map(editMapper) }));
+      }
+
+      setCustomActionModal(null);
+      return;
+    }
+
+    if (scope === "all") {
+      setState((prev) => ({
+        ...prev,
+        chars: prev.chars.map((char) => ({
+          ...char,
+          custom: char.custom.filter((item) => item.id !== customActionModal.itemId),
+        })),
+      }));
+    } else {
+      updateActiveChar((char) => ({
+        ...char,
+        custom: char.custom.filter((item) => item.id !== customActionModal.itemId),
+      }));
+    }
+
+    setCustomActionModal(null);
+  }
+
+  function requestAddCustom() {
+    const trimmedName = formName.trim();
+    if (!trimmedName) return;
+
+    const days = Math.max(0, Math.floor(parseInt(formDays, 10) || 0));
+    const hours = Math.max(0, Math.floor(parseInt(formHours, 10) || 0));
+    const cdHours = days * 24 + hours;
+    if (cdHours <= 0) return;
+    const payload = {
+      kind: "add" as const,
+      name: trimmedName.slice(0, 40),
+      cdHours,
+      note: formNote.trim().slice(0, 60),
+    };
+
+    if (state.chars.length <= 1) {
+      const newItem = {
+        id: `ci${Date.now()}`,
+        name: payload.name,
+        cd: Math.round(payload.cdHours * 3600),
+        cdLabel: toCustomCdLabel(payload.cdHours),
+        note: payload.note,
+        doneAt: null,
+      };
+      updateActiveChar((char) => ({ ...char, custom: [...char.custom, newItem] }));
+      setFormName("");
+      setFormDays("1");
+      setFormHours("0");
+      setFormNote("");
+      setShowAddForm(false);
+      return;
+    }
+
+    setCustomActionModal(payload);
+  }
+
+  function requestRemoveCustom(itemId: string, itemName: string) {
+    if (state.chars.length <= 1) {
+      updateActiveChar((char) => ({
+        ...char,
+        custom: char.custom.filter((item) => item.id !== itemId),
+      }));
+      return;
+    }
+
+    setCustomActionModal({ kind: "remove", itemId, itemName });
+  }
+
+  function requestEditCustom() {
+    if (!editCustomModal) return;
+
+    const trimmedName = editCustomModal.name.trim();
+    if (!trimmedName) return;
+
+    const days = Math.max(0, Math.floor(parseInt(editCustomModal.cdDays, 10) || 0));
+    const hours = Math.max(0, Math.floor(parseInt(editCustomModal.cdHours, 10) || 0));
+    const cdHours = days * 24 + hours;
+    if (cdHours <= 0) return;
+
+    const payload = {
+      kind: "edit",
+      itemId: editCustomModal.itemId,
+      name: trimmedName.slice(0, 40),
+      cdHours,
+      note: editCustomModal.note.trim().slice(0, 60),
+    } as const;
+
+    if (state.chars.length <= 1) {
+      updateActiveChar((char) => ({
+        ...char,
+        custom: char.custom.map((item) =>
+          item.id === payload.itemId
+            ? {
+                ...item,
+                name: payload.name,
+                cd: Math.round(payload.cdHours * 3600),
+                cdLabel: toCustomCdLabel(payload.cdHours),
+                note: payload.note,
+              }
+            : item,
+        ),
+      }));
+      setEditCustomModal(null);
+      return;
+    }
+
+    setCustomActionModal(payload);
+    setEditCustomModal(null);
+  }
 
   function applyInstanceAction(scope: "active" | "all") {
     if (!instanceActionModal) return;
@@ -256,31 +459,47 @@ export default function HomePage() {
                 const isDone = r > 0;
 
                 return (
-                  <div key={item.id} className={`custom-row ${isDone ? "done" : ""}`}>
-                    <button className="icon-btn chk-btn" onClick={() => toggleCustom(item.id)}>{isDone ? "✓" : ""}</button>
+                  <div
+                    key={item.id}
+                    className={`custom-row ${isDone ? "done" : ""}`}
+                    onClick={() => toggleCustom(item.id)}
+                  >
+                    <button
+                      className="edit-char-btn custom-edit-icon"
+                      aria-label={`Editar ${item.name}`}
+                      title="Editar daily personalizada"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        openEditCustomModal(item);
+                      }}
+                    >
+                      ✎
+                    </button>
+                    <button
+                      className="icon-btn chk-btn"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        toggleCustom(item.id);
+                      }}
+                    >
+                      {isDone ? "✓" : ""}
+                    </button>
                     <div className="custom-body">
-                      <input
-                        className="custom-name-input-react"
-                        value={item.name}
-                        onChange={(e) =>
-                          updateActiveChar((char) => ({
-                            ...char,
-                            custom: char.custom.map((x) => (x.id === item.id ? { ...x, name: e.target.value } : x)),
-                          }))
-                        }
-                      />
-                      {item.note ? <span className="note-badge">{item.note}</span> : null}
+                      <div className="custom-top">
+                        <span className="custom-name-text">{item.name}</span>
+                        {item.note ? <span className="note-badge">{item.note}</span> : null}
+                      </div>
+                    </div>
+                    <div className="custom-cd-col">
+                      <span className={`pill ${isDone ? "active" : "idle"}`}>{isDone ? fmt(r) : `CD: ${item.cdLabel}`}</span>
                     </div>
                     <div className="custom-right">
-                      <span className={`pill ${isDone ? "active" : "idle"}`}>{isDone ? fmt(r) : `CD: ${item.cdLabel}`}</span>
                       <button
                         className="icon-btn"
-                        onClick={() =>
-                          updateActiveChar((char) => ({
-                            ...char,
-                            custom: char.custom.filter((x) => x.id !== item.id),
-                          }))
-                        }
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          requestRemoveCustom(item.id, item.name);
+                        }}
                       >
                         Eliminar
                       </button>
@@ -291,7 +510,7 @@ export default function HomePage() {
             </div>
 
             {showAddForm ? (
-              <div className="add-form open">
+              <div className="add-form open add-form-desktop">
                 <div className="form-row">
                   <div className="form-field">
                     <label className="form-label">Nombre de la Daily</label>
@@ -300,8 +519,12 @@ export default function HomePage() {
                 </div>
                 <div className="form-row">
                   <div className="form-field">
-                    <label className="form-label">Cooldown (horas)</label>
-                    <input className="form-input" type="number" min={0.1} step={0.5} value={formCd} onChange={(e) => setFormCd(e.target.value)} />
+                    <label className="form-label">Días</label>
+                    <input className="form-input" type="number" min={0} step={1} value={formDays} onChange={(e) => setFormDays(e.target.value)} />
+                  </div>
+                  <div className="form-field">
+                    <label className="form-label">Horas</label>
+                    <input className="form-input" type="number" min={0} step={1} value={formHours} onChange={(e) => setFormHours(e.target.value)} />
                   </div>
                   <div className="form-field">
                     <label className="form-label">Observación (opcional)</label>
@@ -310,7 +533,7 @@ export default function HomePage() {
                 </div>
                 <div className="form-btns">
                   <button className="btn-cancel" onClick={() => setShowAddForm(false)}>Cancelar</button>
-                  <button className="btn-confirm" onClick={addCustom}>Guardar</button>
+                  <button className="btn-confirm" onClick={requestAddCustom}>Guardar</button>
                 </div>
               </div>
             ) : null}
@@ -380,6 +603,160 @@ export default function HomePage() {
                     );
                   })
                 )}
+              </div>
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+      {showAddForm ? (
+        <div className="modal-overlay open add-custom-modal-overlay" onClick={() => setShowAddForm(false)}>
+          <div className="modal add-custom-modal" onClick={(e) => e.stopPropagation()}>
+            <h3 className="modal-header">
+              <span className="modal-title">Agregar Daily Personalizada</span>
+              <button className="modal-x" aria-label="Cerrar modal" onClick={() => setShowAddForm(false)}>×</button>
+            </h3>
+            <div className="add-form open add-form-mobile">
+              <div className="form-row">
+                <div className="form-field">
+                  <label className="form-label">Nombre de la Daily</label>
+                  <input className="form-input" placeholder="Ej: Boost XP, Evento..." value={formName} onChange={(e) => setFormName(e.target.value)} maxLength={40} />
+                </div>
+              </div>
+              <div className="form-row">
+                <div className="form-field">
+                  <label className="form-label">Días</label>
+                  <input className="form-input" type="number" min={0} step={1} value={formDays} onChange={(e) => setFormDays(e.target.value)} />
+                </div>
+                <div className="form-field">
+                  <label className="form-label">Horas</label>
+                  <input className="form-input" type="number" min={0} step={1} value={formHours} onChange={(e) => setFormHours(e.target.value)} />
+                </div>
+                <div className="form-field">
+                  <label className="form-label">Observación (opcional)</label>
+                  <input className="form-input" value={formNote} onChange={(e) => setFormNote(e.target.value)} maxLength={60} />
+                </div>
+              </div>
+              <div className="form-btns">
+                <button className="btn-cancel" onClick={() => setShowAddForm(false)}>Cancelar</button>
+                <button className="btn-confirm" onClick={requestAddCustom}>Guardar</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+      {editCustomModal ? (
+        <div className="modal-overlay open" onClick={() => setEditCustomModal(null)}>
+          <div className="modal modal-edit-custom" onClick={(e) => e.stopPropagation()}>
+            <h3 className="modal-header">
+              <span className="modal-title">Editar Daily Personalizada</span>
+              <button
+                className="modal-x"
+                aria-label="Cerrar modal"
+                onClick={() => setEditCustomModal(null)}
+              >
+                ×
+              </button>
+            </h3>
+
+            <div className="form-row">
+              <div className="form-field">
+                <label className="form-label">Nombre de la Daily</label>
+                <input
+                  className="form-input"
+                  placeholder="Ej: Boost XP, Evento..."
+                  value={editCustomModal.name}
+                  onChange={(e) =>
+                    setEditCustomModal((prev) => (prev ? { ...prev, name: e.target.value } : prev))
+                  }
+                  maxLength={40}
+                />
+              </div>
+            </div>
+
+            <div className="form-row">
+              <div className="form-field">
+                <label className="form-label">Días</label>
+                <input
+                  className="form-input"
+                  type="number"
+                  min={0}
+                  step={1}
+                  value={editCustomModal.cdDays}
+                  onChange={(e) =>
+                    setEditCustomModal((prev) => (prev ? { ...prev, cdDays: e.target.value } : prev))
+                  }
+                />
+              </div>
+              <div className="form-field">
+                <label className="form-label">Horas</label>
+                <input
+                  className="form-input"
+                  type="number"
+                  min={0}
+                  step={1}
+                  value={editCustomModal.cdHours}
+                  onChange={(e) =>
+                    setEditCustomModal((prev) => (prev ? { ...prev, cdHours: e.target.value } : prev))
+                  }
+                />
+              </div>
+              <div className="form-field">
+                <label className="form-label">Observación (opcional)</label>
+                <input
+                  className="form-input"
+                  value={editCustomModal.note}
+                  onChange={(e) =>
+                    setEditCustomModal((prev) => (prev ? { ...prev, note: e.target.value } : prev))
+                  }
+                  maxLength={60}
+                />
+              </div>
+            </div>
+
+            <div className="form-btns">
+              <button className="btn-cancel" onClick={() => setEditCustomModal(null)}>Cancelar</button>
+              <button className="btn-confirm" onClick={requestEditCustom}>Guardar</button>
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+      {customActionModal ? (
+        <div className="modal-overlay open" onClick={() => setCustomActionModal(null)}>
+          <div className="modal modal-scope" onClick={(e) => e.stopPropagation()}>
+            <h3 className="modal-header">
+              <span className="modal-title">
+                {customActionModal.kind === "add"
+                  ? "Agregar daily personalizada"
+                  : customActionModal.kind === "edit"
+                    ? "Editar daily personalizada"
+                    : "Eliminar daily personalizada"}
+              </span>
+              <button
+                className="modal-x"
+                aria-label="Cerrar modal"
+                onClick={() => setCustomActionModal(null)}
+              >
+                ×
+              </button>
+            </h3>
+            <div className="scope-modal-body">
+              <p className="scope-modal-text">
+                {customActionModal.kind === "add"
+                  ? `¿Cómo quieres agregar "${customActionModal.name}"?`
+                  : customActionModal.kind === "edit"
+                    ? `¿Cómo quieres editar "${customActionModal.name}"?`
+                    : `¿Cómo quieres eliminar "${customActionModal.itemName}"?`}
+              </p>
+              <div className="scope-modal-actions">
+                <button className="btn-scope-all" onClick={() => applyCustomAction("all")}>
+                  Aplicar para todos los personajes
+                </button>
+                <button className="btn-confirm" onClick={() => applyCustomAction("active")}>
+                  Aplicar para el personaje actual
+                </button>
               </div>
             </div>
           </div>
