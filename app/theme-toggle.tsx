@@ -20,7 +20,6 @@ export function ThemeToggle() {
     document.documentElement.dataset.theme = nextTheme;
     document.documentElement.style.colorScheme = nextTheme;
     localStorage.setItem("theme", nextTheme);
-    document.cookie = `theme=${nextTheme}; Path=/; Max-Age=31536000; SameSite=Lax`;
     setTheme(nextTheme);
   }
 
@@ -43,4 +42,3 @@ export function ThemeToggle() {
     </button>
   );
 }
-
