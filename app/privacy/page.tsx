@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 export default function PrivacyPage() {
   return (
     <main className="privacy-page">
@@ -20,6 +22,10 @@ export default function PrivacyPage() {
           revisión.
         </p>
       </section>
+
+      <Link href="/" className="privacy-back-link">
+        Volver al inicio
+      </Link>
     </main>
   );
 }

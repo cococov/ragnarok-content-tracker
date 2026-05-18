@@ -1053,6 +1053,20 @@ a:focus-visible {
   margin-top: 10px;
 }
 
+.privacy-back-link {
+  justify-self: center;
+  color: var(--accent-strong);
+  text-decoration: none;
+  border: 1px solid color-mix(in srgb, var(--accent) 36%, var(--line));
+  border-radius: 10px;
+  padding: 8px 14px;
+  background: color-mix(in srgb, var(--accent) 8%, var(--panel));
+}
+
+.privacy-back-link:hover {
+  background: color-mix(in srgb, var(--accent) 14%, var(--panel));
+}
+
 .modal-overlay {
   position: fixed;
   inset: 0;
