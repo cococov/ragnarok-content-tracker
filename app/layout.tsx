@@ -49,19 +49,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="es" suppressHydrationWarning data-theme={initialTheme} style={{ colorScheme: initialTheme }}>
       <head>
-        <Script id="theme-init" strategy="beforeInteractive">
-          {`
-try {
-  const stored = localStorage.getItem("theme");
-  const theme = stored === "light" || stored === "dark"
-    ? stored
-    : (matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark");
-  document.documentElement.dataset.theme = theme;
-  document.documentElement.style.colorScheme = theme;
-  if (stored !== theme) localStorage.setItem("theme", theme);
-} catch {}
-`}
-        </Script>
+        <Script src="/theme-init.js" strategy="beforeInteractive" />
       </head>
       <body>
         <div className="theme-toggle-wrap">
