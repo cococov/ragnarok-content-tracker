@@ -16,6 +16,9 @@ export const metadata: Metadata = {
   metadataBase: resolvedAppUrl ? new URL(resolvedAppUrl) : undefined,
   title: "Checklist de Instancias - Ragnarok Online",
   description: "Seguimiento diario de misiones y contenido en Ragnarok Online",
+  verification: {
+    google: "OQyADeLI3GjGHSwxqTUF8Ct08Ifc2gkusKujWW3cmpA",
+  },
   icons: {
     icon: "/icon.svg",
   },
