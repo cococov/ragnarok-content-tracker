@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { cookies } from "next/headers";
 import Script from "next/script";
 import { ThemeToggle } from "./theme-toggle";
@@ -72,7 +73,14 @@ try {
         <div className="theme-toggle-wrap">
           <ThemeToggle />
         </div>
-        {children}
+        <div className="app-shell">{children}</div>
+        <footer className="site-footer">
+          <div className="footer-bottom">
+            <Link href="/privacy" className="footer-link">Política de privacidad</Link>
+            <span className="footer-dot" aria-hidden="true" />
+            <p>Hecho con <span aria-hidden="true">❤️</span> para la comunidad de Ragnarok Online</p>
+          </div>
+        </footer>
       </body>
     </html>
   );

@@ -55,8 +55,14 @@ body {
   color: var(--text);
   font-family: "Manrope", "Geist", "Aptos", "Segoe UI", "Helvetica Neue", sans-serif;
   min-height: 100vh;
+  display: flex;
+  flex-direction: column;
   transition: background 160ms ease, color 160ms ease;
   line-height: 1.45;
+}
+
+.app-shell {
+  flex: 1;
 }
 
 a { color: inherit; }
@@ -939,6 +945,7 @@ a:focus-visible {
   border-top: 1px solid color-mix(in srgb, var(--line) 80%, transparent);
   padding-top: 24px;
   padding-bottom: 20px;
+  margin-top: auto;
 }
 
 .footer-inner {
@@ -990,6 +997,57 @@ a:focus-visible {
   height: 3px;
   border-radius: 999px;
   background: var(--line-strong);
+}
+
+.footer-link {
+  color: var(--accent-strong);
+  text-decoration: none;
+}
+
+.footer-link:hover {
+  text-decoration: underline;
+}
+
+.privacy-page {
+  width: min(1100px, calc(100vw - 32px));
+  margin: 0 auto;
+  padding-top: 34px;
+  display: grid;
+  gap: 16px;
+}
+
+.privacy-card {
+  backdrop-filter: blur(18px);
+  background: color-mix(in srgb, var(--panel) 88%, transparent);
+  border: 1px solid color-mix(in srgb, var(--line) 84%, transparent);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 20px;
+}
+
+.privacy-eyebrow {
+  color: var(--accent);
+  font-size: 0.78rem;
+  font-weight: 700;
+  margin: 0 0 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.privacy-card h1 {
+  font-family: "Sora", "Manrope", sans-serif;
+  font-size: clamp(1.8rem, 3vw, 2.4rem);
+  margin-bottom: 10px;
+}
+
+.privacy-card h2 {
+  font-family: "Sora", "Manrope", sans-serif;
+  font-size: 1.35rem;
+  margin-bottom: 10px;
+}
+
+.privacy-card p + p {
+  margin-top: 10px;
 }
 
 .modal-overlay {
@@ -1120,6 +1178,10 @@ a:focus-visible {
   .main-grid,
   .footer-actions,
   .site-footer {
+    width: min(1100px, calc(100vw - 20px));
+  }
+
+  .privacy-page {
     width: min(1100px, calc(100vw - 20px));
   }
 
