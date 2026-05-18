@@ -76,9 +76,9 @@ try {
         <div className="app-shell">{children}</div>
         <footer className="site-footer">
           <div className="footer-bottom">
-            <Link href="/privacy" className="footer-link">Política de privacidad</Link>
+            <p>Hecho con <span className="footer-heart" aria-hidden="true">💜</span> para la comunidad de Ragnarok Online</p>
             <span className="footer-dot" aria-hidden="true" />
-            <p>Hecho con <span aria-hidden="true">❤️</span> para la comunidad de Ragnarok Online</p>
+            <Link href="/privacy" className="footer-link">Política de privacidad</Link>
           </div>
         </footer>
       </body>
