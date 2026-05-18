@@ -5,11 +5,12 @@ const csp = [
   "base-uri 'self'",
   "object-src 'none'",
   "frame-ancestors 'none'",
-  "img-src 'self' data: blob:",
+  "img-src 'self' data: blob: https://cdn.discordapp.com",
   "font-src 'self' data:",
   "style-src 'self' 'unsafe-inline'",
-  "script-src 'self'",
-  "connect-src 'self'",
+  // Next.js needs inline bootstrap scripts; eval is required in development.
+  "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
+  "connect-src 'self' https://discord.com https://*.discord.com",
   "form-action 'self'",
   "upgrade-insecure-requests",
 ].join("; ");
