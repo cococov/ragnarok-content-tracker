@@ -142,6 +142,7 @@ export default function HomePage() {
 
       const nextDoneAt = new Date(editDoneAtModal.doneAt);
       nextDoneAt.setFullYear(y, m - 1, d);
+      nextDoneAt.setHours(4, 0, 0, 0);
       nextDoneAtMs = nextDoneAt.getTime();
     }
 
