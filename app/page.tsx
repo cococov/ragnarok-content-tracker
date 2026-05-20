@@ -30,7 +30,9 @@ type EditDoneAtModalState = {
   itemId: string;
   itemName: string;
   doneAt: number;
-  date: string;
+  cdSeconds: number;
+  value: string;
+  withTime: boolean;
 } | null;
 
 function toCustomCdLabel(hours: number): string {
@@ -91,29 +93,57 @@ export default function HomePage() {
     return `${y}-${m}-${day}`;
   }
 
-  function openEditDoneAtModal(kind: "instance" | "custom", itemId: string, itemName: string, doneAt: number) {
+  function toDateTimeLocalValue(timestamp: number): string {
+    const d = new Date(timestamp);
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, "0");
+    const day = String(d.getDate()).padStart(2, "0");
+    const h = String(d.getHours()).padStart(2, "0");
+    const min = String(d.getMinutes()).padStart(2, "0");
+    return `${y}-${m}-${day}T${h}:${min}`;
+  }
+
+  function openEditDoneAtModal(
+    kind: "instance" | "custom",
+    itemId: string,
+    itemName: string,
+    doneAt: number,
+    cdSeconds: number,
+  ) {
+    const withTime = cdSeconds < 24 * 3600;
     setEditDoneAtModal({
       kind,
       itemId,
       itemName,
       doneAt,
-      date: toDateInputValue(doneAt),
+      cdSeconds,
+      withTime,
+      value: withTime ? toDateTimeLocalValue(doneAt) : toDateInputValue(doneAt),
     });
   }
 
   function saveDoneAtDate() {
-    if (!editDoneAtModal || !editDoneAtModal.date) return;
-    const parts = editDoneAtModal.date.split("-");
-    if (parts.length !== 3) return;
-    const [yStr, mStr, dStr] = parts;
-    const y = parseInt(yStr, 10);
-    const m = parseInt(mStr, 10);
-    const d = parseInt(dStr, 10);
-    if (!Number.isFinite(y) || !Number.isFinite(m) || !Number.isFinite(d)) return;
+    if (!editDoneAtModal || !editDoneAtModal.value) return;
+    let nextDoneAtMs = editDoneAtModal.doneAt;
 
-    const nextDoneAt = new Date(editDoneAtModal.doneAt);
-    nextDoneAt.setFullYear(y, m - 1, d);
-    const nextDoneAtMs = nextDoneAt.getTime();
+    if (editDoneAtModal.withTime) {
+      const parsed = new Date(editDoneAtModal.value);
+      const parsedMs = parsed.getTime();
+      if (!Number.isFinite(parsedMs)) return;
+      nextDoneAtMs = parsedMs;
+    } else {
+      const parts = editDoneAtModal.value.split("-");
+      if (parts.length !== 3) return;
+      const [yStr, mStr, dStr] = parts;
+      const y = parseInt(yStr, 10);
+      const m = parseInt(mStr, 10);
+      const d = parseInt(dStr, 10);
+      if (!Number.isFinite(y) || !Number.isFinite(m) || !Number.isFinite(d)) return;
+
+      const nextDoneAt = new Date(editDoneAtModal.doneAt);
+      nextDoneAt.setFullYear(y, m - 1, d);
+      nextDoneAtMs = nextDoneAt.getTime();
+    }
 
     if (editDoneAtModal.kind === "instance") {
       setInstanceDoneAt(editDoneAtModal.itemId, nextDoneAtMs);
@@ -482,7 +512,7 @@ export default function HomePage() {
                               e.stopPropagation();
                               const doneAt = activeChar.instances[item.id];
                               if (!doneAt) return;
-                              openEditDoneAtModal("instance", item.id, item.name, doneAt);
+                              openEditDoneAtModal("instance", item.id, item.name, doneAt, item.cd);
                             }}
                             role={doneItem ? "button" : undefined}
                             tabIndex={doneItem ? 0 : -1}
@@ -493,7 +523,7 @@ export default function HomePage() {
                               e.stopPropagation();
                               const doneAt = activeChar.instances[item.id];
                               if (!doneAt) return;
-                              openEditDoneAtModal("instance", item.id, item.name, doneAt);
+                              openEditDoneAtModal("instance", item.id, item.name, doneAt, item.cd);
                             }}
                           >
                             {doneItem ? fmt(r) : `CD: ${item.cdLabel}`}
@@ -570,7 +600,7 @@ export default function HomePage() {
                         onClick={(e) => {
                           if (!isDone || !item.doneAt) return;
                           e.stopPropagation();
-                          openEditDoneAtModal("custom", item.id, item.name, item.doneAt);
+                          openEditDoneAtModal("custom", item.id, item.name, item.doneAt, item.cd);
                         }}
                         role={isDone ? "button" : undefined}
                         tabIndex={isDone ? 0 : -1}
@@ -579,7 +609,7 @@ export default function HomePage() {
                           if (e.key !== "Enter" && e.key !== " ") return;
                           e.preventDefault();
                           e.stopPropagation();
-                          openEditDoneAtModal("custom", item.id, item.name, item.doneAt);
+                          openEditDoneAtModal("custom", item.id, item.name, item.doneAt, item.cd);
                         }}
                       >
                         {isDone ? fmt(r) : `CD: ${item.cdLabel}`}
@@ -840,11 +870,11 @@ export default function HomePage() {
                 <label className="form-label">Fecha en que fue realizada</label>
                 <input
                   className="form-input"
-                  type="date"
-                  value={editDoneAtModal.date}
-                  max="9999-12-31"
+                  type={editDoneAtModal.withTime ? "datetime-local" : "date"}
+                  value={editDoneAtModal.value}
+                  max={editDoneAtModal.withTime ? "9999-12-31T23:59" : "9999-12-31"}
                   onChange={(e) =>
-                    setEditDoneAtModal((prev) => (prev ? { ...prev, date: e.target.value } : prev))
+                    setEditDoneAtModal((prev) => (prev ? { ...prev, value: e.target.value } : prev))
                   }
                 />
               </div>
