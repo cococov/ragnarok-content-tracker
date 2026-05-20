@@ -295,6 +295,25 @@ export function useTracker() {
     }));
   }
 
+  function setInstanceDoneAt(itemId: string, doneAt: number | null) {
+    updateActiveChar((ch) => {
+      const instances = { ...ch.instances };
+      if (doneAt === null) {
+        delete instances[itemId];
+      } else {
+        instances[itemId] = doneAt;
+      }
+      return { ...ch, instances };
+    });
+  }
+
+  function setCustomDoneAt(itemId: string, doneAt: number | null) {
+    updateActiveChar((ch) => ({
+      ...ch,
+      custom: ch.custom.map((i) => (i.id === itemId ? { ...i, doneAt } : i)),
+    }));
+  }
+
   function removeGlobal(id: string, scope: ApplyScope = "active") {
     if (scope === "all") {
       setState((prev) => ({
@@ -358,6 +377,8 @@ export function useTracker() {
     addNewGlobalInstance,
     addCustom,
     toggleCustom,
+    setInstanceDoneAt,
+    setCustomDoneAt,
     removeGlobal,
     resetCharacter,
   };

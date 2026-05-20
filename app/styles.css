@@ -1153,6 +1153,10 @@ a:focus-visible {
   background: color-mix(in srgb, var(--accent) 14%, var(--panel));
 }
 
+.pill.clickable {
+  cursor: pointer;
+}
+
 @media (max-width: 720px) {
   .add-form-desktop {
     display: none;

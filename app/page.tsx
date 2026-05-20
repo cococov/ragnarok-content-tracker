@@ -25,6 +25,14 @@ type CustomActionModalState =
   | { kind: "remove"; itemId: string; itemName: string }
   | null;
 
+type EditDoneAtModalState = {
+  kind: "instance" | "custom";
+  itemId: string;
+  itemName: string;
+  doneAt: number;
+  date: string;
+} | null;
+
 function toCustomCdLabel(hours: number): string {
   if (Number.isInteger(hours) && hours % 24 === 0) {
     const days = hours / 24;
@@ -65,12 +73,56 @@ export default function HomePage() {
     toggleInstance,
     addNewGlobalInstance,
     toggleCustom,
+    setInstanceDoneAt,
+    setCustomDoneAt,
     removeGlobal,
     resetCharacter,
   } = useTracker();
   const [instanceActionModal, setInstanceActionModal] = useState<InstanceActionModalState>(null);
   const [editCustomModal, setEditCustomModal] = useState<EditCustomModalState>(null);
   const [customActionModal, setCustomActionModal] = useState<CustomActionModalState>(null);
+  const [editDoneAtModal, setEditDoneAtModal] = useState<EditDoneAtModalState>(null);
+
+  function toDateInputValue(timestamp: number): string {
+    const d = new Date(timestamp);
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, "0");
+    const day = String(d.getDate()).padStart(2, "0");
+    return `${y}-${m}-${day}`;
+  }
+
+  function openEditDoneAtModal(kind: "instance" | "custom", itemId: string, itemName: string, doneAt: number) {
+    setEditDoneAtModal({
+      kind,
+      itemId,
+      itemName,
+      doneAt,
+      date: toDateInputValue(doneAt),
+    });
+  }
+
+  function saveDoneAtDate() {
+    if (!editDoneAtModal || !editDoneAtModal.date) return;
+    const parts = editDoneAtModal.date.split("-");
+    if (parts.length !== 3) return;
+    const [yStr, mStr, dStr] = parts;
+    const y = parseInt(yStr, 10);
+    const m = parseInt(mStr, 10);
+    const d = parseInt(dStr, 10);
+    if (!Number.isFinite(y) || !Number.isFinite(m) || !Number.isFinite(d)) return;
+
+    const nextDoneAt = new Date(editDoneAtModal.doneAt);
+    nextDoneAt.setFullYear(y, m - 1, d);
+    const nextDoneAtMs = nextDoneAt.getTime();
+
+    if (editDoneAtModal.kind === "instance") {
+      setInstanceDoneAt(editDoneAtModal.itemId, nextDoneAtMs);
+    } else {
+      setCustomDoneAt(editDoneAtModal.itemId, nextDoneAtMs);
+    }
+
+    setEditDoneAtModal(null);
+  }
 
   function openEditCustomModal(item: CustomItem) {
     const totalHours = Math.max(1, Math.round(item.cd / 3600));
@@ -423,7 +475,29 @@ export default function HomePage() {
                           />
                         </div>
                         <div className="row-actions">
-                          <span className={`pill ${doneItem ? "active" : "idle"}`}>{doneItem ? fmt(r) : `CD: ${item.cdLabel}`}</span>
+                          <span
+                            className={`pill ${doneItem ? "active clickable" : "idle"}`}
+                            onClick={(e) => {
+                              if (!doneItem) return;
+                              e.stopPropagation();
+                              const doneAt = activeChar.instances[item.id];
+                              if (!doneAt) return;
+                              openEditDoneAtModal("instance", item.id, item.name, doneAt);
+                            }}
+                            role={doneItem ? "button" : undefined}
+                            tabIndex={doneItem ? 0 : -1}
+                            onKeyDown={(e) => {
+                              if (!doneItem) return;
+                              if (e.key !== "Enter" && e.key !== " ") return;
+                              e.preventDefault();
+                              e.stopPropagation();
+                              const doneAt = activeChar.instances[item.id];
+                              if (!doneAt) return;
+                              openEditDoneAtModal("instance", item.id, item.name, doneAt);
+                            }}
+                          >
+                            {doneItem ? fmt(r) : `CD: ${item.cdLabel}`}
+                          </span>
                           <button
                             className="icon-btn"
                             onClick={(e) => {
@@ -491,7 +565,25 @@ export default function HomePage() {
                       </div>
                     </div>
                     <div className="custom-cd-col">
-                      <span className={`pill ${isDone ? "active" : "idle"}`}>{isDone ? fmt(r) : `CD: ${item.cdLabel}`}</span>
+                      <span
+                        className={`pill ${isDone ? "active clickable" : "idle"}`}
+                        onClick={(e) => {
+                          if (!isDone || !item.doneAt) return;
+                          e.stopPropagation();
+                          openEditDoneAtModal("custom", item.id, item.name, item.doneAt);
+                        }}
+                        role={isDone ? "button" : undefined}
+                        tabIndex={isDone ? 0 : -1}
+                        onKeyDown={(e) => {
+                          if (!isDone || !item.doneAt) return;
+                          if (e.key !== "Enter" && e.key !== " ") return;
+                          e.preventDefault();
+                          e.stopPropagation();
+                          openEditDoneAtModal("custom", item.id, item.name, item.doneAt);
+                        }}
+                      >
+                        {isDone ? fmt(r) : `CD: ${item.cdLabel}`}
+                      </span>
                     </div>
                     <div className="custom-right">
                       <button
@@ -718,6 +810,49 @@ export default function HomePage() {
             <div className="form-btns">
               <button className="btn-cancel" onClick={() => setEditCustomModal(null)}>Cancelar</button>
               <button className="btn-confirm" onClick={requestEditCustom}>Guardar</button>
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+      {editDoneAtModal ? (
+        <div className="modal-overlay open" onClick={() => setEditDoneAtModal(null)}>
+          <div className="modal modal-edit-custom" onClick={(e) => e.stopPropagation()}>
+            <h3 className="modal-header">
+              <span className="modal-title">Modificar Fecha Realizada</span>
+              <button
+                className="modal-x"
+                aria-label="Cerrar modal"
+                onClick={() => setEditDoneAtModal(null)}
+              >
+                ×
+              </button>
+            </h3>
+
+            <div className="form-row">
+              <div className="form-field">
+                <label className="form-label">Instancia / Daily</label>
+                <input className="form-input" value={editDoneAtModal.itemName} readOnly />
+              </div>
+            </div>
+            <div className="form-row">
+              <div className="form-field">
+                <label className="form-label">Fecha en que fue realizada</label>
+                <input
+                  className="form-input"
+                  type="date"
+                  value={editDoneAtModal.date}
+                  max="9999-12-31"
+                  onChange={(e) =>
+                    setEditDoneAtModal((prev) => (prev ? { ...prev, date: e.target.value } : prev))
+                  }
+                />
+              </div>
+            </div>
+
+            <div className="form-btns">
+              <button className="btn-cancel" onClick={() => setEditDoneAtModal(null)}>Cancelar</button>
+              <button className="btn-confirm" onClick={saveDoneAtDate}>Guardar</button>
             </div>
           </div>
         </div>
