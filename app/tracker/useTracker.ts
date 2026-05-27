@@ -201,10 +201,10 @@ export function useTracker() {
     updateActiveChar((ch) => {
       const r = remaining(ch.instances[item.id], item.cd);
       const instances = { ...ch.instances };
-      if (instances[item.id]) {
+      if (r > 0) {
         // Allow manual reset by clicking a checked instance.
         delete instances[item.id];
-      } else if (r <= 0) {
+      } else {
         instances[item.id] = Date.now();
       }
 
@@ -289,8 +289,9 @@ export function useTracker() {
       ...ch,
       custom: ch.custom.map((i) => {
         if (i.id !== itemId) return i;
+        const r = remaining(i.doneAt, i.cd);
         // Allow manual reset by clicking a checked custom daily.
-        return { ...i, doneAt: i.doneAt ? null : Date.now() };
+        return { ...i, doneAt: r > 0 ? null : Date.now() };
       }),
     }));
   }
