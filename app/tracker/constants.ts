@@ -69,6 +69,7 @@ export const BASE_CATEGORIES: Category[] = [
       { id: "jardim_secreto", name: "Hidden Flower Garden (17.2)", cd: 24 * 3600, cdLabel: "1 día", wiki: "https://browiki.org/wiki/Jardim_Secreto" },
       { id: "fazenda_pitayas", name: "Pitaya Farm (17.2)", cd: 24 * 3600, cdLabel: "1 día", wiki: "https://browiki.org/wiki/Fazenda_de_Pitayas" },
       { id: "duelo_sweety", name: "Hey, Sweetie! (17.2)", cd: 24 * 3600, cdLabel: "1 día", wiki: "https://browiki.org/wiki/Duelo_com_Sweety" },
+      { id: "mansion_desilusion", name: "Villa of Deception Normal (18)", cd: 24 * 3600, cdLabel: "1 día", wiki: "https://hazyforest.com/instances%3Avilla_of_deception" },
       { id: "edda_biolab", name: "Edda Biolab", cd: 24 * 3600, cdLabel: "1 día", wiki: "https://browiki.org/wiki/Edda_do_Biolaborat%C3%B3rio" },
       { id: "edda_glasheim", name: "Edda Glast Heim", cd: 24 * 3600, cdLabel: "1 día", wiki: "https://browiki.org/wiki/Edda_de_Glastheim" },
     ],
