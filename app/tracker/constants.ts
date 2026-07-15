@@ -17,11 +17,11 @@ export const DB_INSTANCES: Instance[] = [
   { id: "jardim_secreto", name: "Hidden Flower Garden (17.2)", minLevel: 100, cooldownCategory: "1_day", wiki: "https://browiki.org/wiki/Jardim_Secreto" },
   { id: "fazenda_pitayas", name: "Pitaya Farm (17.2)", minLevel: 100, cooldownCategory: "1_day", wiki: "https://browiki.org/wiki/Fazenda_de_Pitayas" },
   { id: "duelo_sweety", name: "Hey, Sweetie! (17.2)", minLevel: 100, cooldownCategory: "1_day", wiki: "https://browiki.org/wiki/Duelo_com_Sweety" },
-  { id: "purificacion_santuario", name: "Sanctuary Purification (18)", minLevel: 170, cooldownCategory: "1_day", wiki: "https://browiki.org/wiki/Purifica%C3%A7%C3%A3o_do_Santu%C3%A1rio" },
-  { id: "mansion_desilusion", name: "Villa of Deception Normal (18)", minLevel: 170, cooldownCategory: "1_day", wiki: "https://browiki.org/wiki/Mans%C3%A3o_da_Desilus%C3%A3o" },
-  { id: "mansion_desilusion_avanzado", name: "Villa of Deception Advanced (18)", minLevel: 200, cooldownCategory: "1_day", wiki: "https://browiki.org/wiki/Mans%C3%A3o_da_Desilus%C3%A3o#Mec%C3%A2nicas_da_batalha" },
-  { id: "memorias_thanatos", name: "Memories of Thanatos (Thanatos Tower Revamp)", minLevel: 180, cooldownCategory: "1_day", wiki: "https://browiki.org/wiki/Mem%C3%B3rias_de_Thanatos" },
-  { id: "batalha_orcs", name: "Orc's Memory", minLevel: 99, cooldownCategory: "1_day", wiki: "https://browiki.org/wiki/Batalha_dos_Orcs", coins: 5 },
+  { id: "purificacion_santuario", name: "Sanctuary Purification (18)", minLevel: 170, cooldownCategory: "1_day", wiki: "https://hazyforest.com/instances%3Asanctuary_purification" },
+  { id: "mansion_desilusion", name: "Villa of Deception Normal (18)", minLevel: 170, cooldownCategory: "1_day", wiki: "https://hazyforest.com/instances%3Avilla_of_deception" },
+  { id: "mansion_desilusion_avanzado", name: "Villa of Deception Advanced (18)", minLevel: 200, cooldownCategory: "1_day", wiki: "https://hazyforest.com/instances%3Avilla_of_deception#advanced" },
+  { id: "memorias_thanatos", name: "Memories of Thanatos (Thanatos Tower Revamp)", minLevel: 180, cooldownCategory: "1_day", wiki: "https://hazyforest.com/instances%3Athanatos" },
+  { id: "batalha_orcs", name: "Orc's Memory", minLevel: 99, cooldownCategory: "1_day", wiki: "https://hazyforest.com/instances%3Aorc_memory", coins: 5 },
   { id: "memorias_sarah", name: "Sara's Memory", minLevel: 99, cooldownCategory: "1_day", wiki: "https://browiki.org/wiki/Mem%C3%B3rias_de_Sarah", coins: 5 },
   { id: "hospital_abandonado", name: "Abandoned Hospital", minLevel: 100, cooldownCategory: "7_days", wiki: "https://browiki.org/wiki/Hospital_Abandonado", coins: 20 },
   { id: "aos_pes_rei", name: "Charleston Crisis", minLevel: 100, cooldownCategory: "1_day", wiki: "https://browiki.org/wiki/Aos_P%C3%A9s_do_Rei", coins: 10 },
@@ -45,7 +45,7 @@ export const DB_INSTANCES: Instance[] = [
   { id: "sarah_fenrir", name: "Sarah vs Fenrir", minLevel: 99, cooldownCategory: "7_days", wiki: "https://browiki.org/wiki/Sarah_vs_Fenrir", coins: 20 },
   { id: "endless_tower", name: "Endless Tower", minLevel: 50, cooldownCategory: "7_days", wiki: "https://irowiki.org/wiki/Endless_Tower" },
   { id: "fortaleza_voadora", name: "Sky Fortress", minLevel: 160, cooldownCategory: "3_days", wiki: "https://browiki.org/wiki/Fortaleza_Voadora", coins: 7 },
-  { id: "glastheim_infernal", name: "OGH Challenge", minLevel: 170, cooldownCategory: "3_days", wiki: "https://browiki.org/wiki/Glastheim_Infernal" },
+  { id: "glastheim_infernal", name: "OGH Challenge", minLevel: 170, cooldownCategory: "3_days", wiki: "https://hazyforest.com/instances%3Aogh_cm" },
 ];
 
 export const BASE_CATEGORIES: Category[] = [
@@ -55,7 +55,7 @@ export const BASE_CATEGORIES: Category[] = [
     color: "var(--accent-strong)",
     items: [
       { id: "ogh_sombria", name: "OGH Hard", cd: 3 * 24 * 3600, cdLabel: "3 días", wiki: "https://browiki.org/wiki/Glastheim_Sombria", coins: 5 },
-      { id: "glastheim_infernal", name: "OGH Challenge", cd: 3 * 24 * 3600, cdLabel: "3 días", wiki: "https://browiki.org/wiki/Glastheim_Infernal" },
+      { id: "glastheim_infernal", name: "OGH Challenge", cd: 3 * 24 * 3600, cdLabel: "3 días", wiki: "https://hazyforest.com/instances%3Aogh_cm" },
     ],
   },
   {
