@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { BASE_CATEGORIES, DB_INSTANCES, getDefaultState, STORAGE_KEY } from "./constants";
-import type { AppState, CharState, Instance, TrackerItem } from "./types";
+import type { AppState, Category, CharState, Instance, TrackerItem } from "./types";
 import { getNextResetLabel, mapCooldown, remaining } from "./utils";
 
 type ApplyScope = "active" | "all";
@@ -93,42 +93,10 @@ export function useTracker() {
     [state],
   );
 
-  const categories = useMemo(() => {
-    const result = structuredClone(BASE_CATEGORIES);
-    const byId = new Map(DB_INSTANCES.map((instance) => [instance.id, instance]));
-    const addedInstances = activeChar.addedInstances ?? [];
-    const removedInstanceIds = activeChar.removedInstanceIds ?? [];
-
-    addedInstances.forEach((item) => {
-      if (removedInstanceIds.includes(item.id)) return;
-      const canonical = byId.get(item.id);
-      const mergedItem: TrackerItem = canonical
-        ? {
-            ...item,
-            name: canonical.name,
-            wiki: canonical.wiki,
-            coins: canonical.coins ?? item.coins,
-          }
-        : item;
-
-      const target =
-        mergedItem.cdLabel.includes("3 días") || mergedItem.cdLabel.includes("7 días")
-          ? result[0]
-          : mergedItem.cdLabel.includes("horas")
-            ? result[2]
-            : result[1];
-
-      if (!target.items.some((i) => i.id === mergedItem.id || i.wiki === mergedItem.wiki)) {
-        target.items.push(mergedItem);
-      }
-    });
-
-    result.forEach((cat) => {
-      cat.items = cat.items.filter((i) => !removedInstanceIds.includes(i.id));
-    });
-
-    return result;
-  }, [activeChar.addedInstances, activeChar.removedInstanceIds, activeChar.id]);
+  const categoriesByChar = useMemo(() => new Map(
+    state.chars.map((char) => [char.id, getCategoriesForChar(char)]),
+  ), [state.chars]);
+  const categories = categoriesByChar.get(activeChar.id) ?? [];
 
   const totalMain = categories.reduce((sum, c) => sum + c.items.length, 0);
   const doneMain = categories.reduce(
@@ -351,6 +319,7 @@ export function useTracker() {
     setState,
     activeChar,
     categories,
+    categoriesByChar,
     totalMain,
     doneCustom,
     total,
@@ -383,6 +352,43 @@ export function useTracker() {
     removeGlobal,
     resetCharacter,
   };
+}
+
+function getCategoriesForChar(char: CharState): Category[] {
+  const result = structuredClone(BASE_CATEGORIES);
+  const byId = new Map(DB_INSTANCES.map((instance) => [instance.id, instance]));
+  const addedInstances = char.addedInstances ?? [];
+  const removedInstanceIds = char.removedInstanceIds ?? [];
+
+  addedInstances.forEach((item) => {
+    if (removedInstanceIds.includes(item.id)) return;
+    const canonical = byId.get(item.id);
+    const mergedItem: TrackerItem = canonical
+      ? {
+          ...item,
+          name: canonical.name,
+          wiki: canonical.wiki,
+          coins: canonical.coins ?? item.coins,
+        }
+      : item;
+
+    const target =
+      mergedItem.cdLabel.includes("3 días") || mergedItem.cdLabel.includes("7 días")
+        ? result[0]
+        : mergedItem.cdLabel.includes("horas")
+          ? result[2]
+          : result[1];
+
+    if (!target.items.some((i) => i.id === mergedItem.id || i.wiki === mergedItem.wiki)) {
+      target.items.push(mergedItem);
+    }
+  });
+
+  result.forEach((cat) => {
+    cat.items = cat.items.filter((i) => !removedInstanceIds.includes(i.id));
+  });
+
+  return result;
 }
 
 function syncGlobalInstanceNames(state: AppState): AppState {

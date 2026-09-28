@@ -49,7 +49,7 @@ export default function HomePage() {
     setState,
     activeChar,
     categories,
-    totalMain,
+    categoriesByChar,
     doneCustom,
     total,
     done,
@@ -372,12 +372,13 @@ export default function HomePage() {
           <span className="char-bar-label">Personaje:</span>
           <div id="char-tabs">
             {state.chars.map((ch) => {
-              const chDoneMain = categories.reduce(
+              const chCategories = categoriesByChar.get(ch.id) ?? [];
+              const chDoneMain = chCategories.reduce(
                 (sum, c) => sum + c.items.filter((i) => remaining(ch.instances[i.id], i.cd) > 0).length,
                 0,
               );
               const chDoneCustom = ch.custom.filter((i) => remaining(i.doneAt, i.cd) > 0).length;
-              const chTotal = totalMain + ch.custom.length;
+              const chTotal = chCategories.reduce((sum, c) => sum + c.items.length, 0) + ch.custom.length;
 
               return (
                 <div
