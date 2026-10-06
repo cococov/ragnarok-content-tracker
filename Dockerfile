@@ -1,7 +1,7 @@
-FROM node:24-alpine AS base
+FROM node:24.21.0-alpine AS base
 WORKDIR /app
 ENV NEXT_TELEMETRY_DISABLED=1
-RUN corepack enable && corepack prepare pnpm@10.33.3 --activate
+RUN corepack enable && corepack prepare pnpm@12.9.1 --activate
 
 FROM base AS deps
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
@@ -13,7 +13,7 @@ COPY . .
 RUN mkdir -p public
 RUN pnpm build
 
-FROM node:24-alpine AS runner
+FROM node:24.21.0-alpine AS runner
 WORKDIR /app
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1

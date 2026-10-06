@@ -2,6 +2,26 @@
 
 Checklist de instancias para Ragnarok Online construido con Next.js.
 
+## Entorno de desarrollo
+
+Este proyecto usa Node.js **24.21.0 LTS** y pnpm **12.9.1**.
+`.node-version` y `.nvmrc` seleccionan la versión local; `packageManager` fija pnpm.
+
+```bash
+# Con nodenv
+nodenv install -s 24.21.0
+
+# O con nvm
+nvm install
+nvm use
+
+corepack enable
+corepack prepare pnpm@12.9.1 --activate
+pnpm install --frozen-lockfile
+```
+
+Docker usa las mismas versiones de Node y pnpm.
+
 ## Stack
 
 - Next.js 16 (App Router)
@@ -11,8 +31,8 @@ Checklist de instancias para Ragnarok Online construido con Next.js.
 
 ## Requisitos
 
-- Node.js 20+
-- pnpm
+- Node.js 24.21.0 LTS
+- pnpm 12.9.1
 - PostgreSQL 16+ (o Docker para levantarlo)
 
 ## Variables de entorno
